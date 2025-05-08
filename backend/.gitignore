@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 ai-gm-d36d8-a468a62a3b25.json
+ai-gm-d36d8-firebase-adminsdk-fbsvc-8a43202cfa.json
+
 # C extensions
 *.so
 
