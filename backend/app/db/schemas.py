@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
-
 # ----- User Schema -----
+
+
 class User(BaseModel):
     uid: str
     display_name: Optional[str]
