@@ -14,8 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="frontend/dist/static"), name="static")
-app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="index")
+# app.mount("/static", StaticFiles(directory="frontend/dist/static"), name="static")
+# app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="index")
 
 app.include_router(ai_router, prefix="/api/ai", tags=["AI"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])

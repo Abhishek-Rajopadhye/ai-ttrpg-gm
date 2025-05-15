@@ -1,6 +1,6 @@
 from huggingface_hub import InferenceClient
 from app.core.config import get_settings
-from db.schemas import Message
+from app.db.schemas import Message
 from typing import List
 
 settings = get_settings()
@@ -17,10 +17,8 @@ class AIModelClient:
         self.provider = settings.PROVIDER
         self.hf_token = settings.HF_API_KEY
 
-        if self.provider == "huggingface":
-            self.client = InferenceClient(provider=self.provider, model=self.model_name, token=self.hf_token)
-        else:
-            raise ValueError(f"Inference provider '{self.provider}' not supported.")
+        self.client = InferenceClient(provider=self.provider, model=self.model_name, token=self.hf_token)
+
         
     def format_messages(self, prompt: str, history: List[Message]) -> List[dict]:
         messages = [{"role": msg.role, "content": msg.content} for msg in history]

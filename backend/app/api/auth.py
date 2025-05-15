@@ -2,13 +2,12 @@ from fastapi import APIRouter, HTTPException, Body
 from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials
+from fastapi.responses import RedirectResponse
 from app.services.auth_service import (
-    register_email_user,
-    register_github_user,
-    register_google_user,
     login_email_user,
-    login_github_user,
-    login_google_user,
+    register_email_user,
+    get_google_oauth_url,
+    get_github_oauth_url,
 )
 
 import os
@@ -36,37 +35,17 @@ async def register_email(data: EmailPasswordRegister):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/register/github")
-async def register_github(access_token: str = Body(..., embed=True)):
-    try:
-        return register_github_user(access_token)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/register/google")
-async def register_google(id_token: str = Body(..., embed=True)):
-    try:
-        return register_google_user(id_token)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/login/email")
+@router.get("/login/email")
 async def login_email(data: EmailPasswordLogin):
     try:
         return login_email_user(data.email, data.password)
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-@router.post("/login/github")
-async def login_github(access_token: str = Body(..., embed=True)):
-    try:
-        return login_github_user(access_token)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+@router.get("/login/google")
+async def login_google():
+    return RedirectResponse(get_google_oauth_url())
 
-@router.post("/login/google")
-async def login_google(id_token: str = Body(..., embed=True)):
-    try:
-        return login_google_user(id_token)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+@router.get("/login/github")
+async def login_github():
+    return RedirectResponse(get_github_oauth_url())
