@@ -1,12 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./config/firebaseConfig";
 import AuthPage from "./pages/AuthPage";
 import Chatbox from "./pages/Chatbox";
 
-export default function App() {
-	const [user, setUser] = useState(null);
+import { AuthProvider, AuthContext } from "./context/AuthContext";
+
+function AppRoutes() {
+	const { user, setUser } = useContext(AuthContext);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -15,7 +17,7 @@ export default function App() {
 			setLoading(false);
 		});
 		return () => unsubscribe();
-	}, []);
+	}, [setUser]);
 
 	if (loading) return <div className="p-4 text-center">Loading...</div>;
 
@@ -27,5 +29,13 @@ export default function App() {
 				<Route path="*" element={<Navigate to={user ? "/chat" : "/auth"} />} />
 			</Routes>
 		</Router>
+	);
+}
+
+export default function App() {
+	return (
+		<AuthProvider>
+			<AppRoutes />
+		</AuthProvider>
 	);
 }
