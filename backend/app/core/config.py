@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     FIREBASE_SIGNIN_URL: str = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
     FIREBASE_SIGNUP_URL: str = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_APIKEY}"
     FIREBASE_IDP_URL: str = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={FIREBASE_API_KEY}"
+    FIREBASE_AUTH_REDIRECT_URI: str
     FIREBASE_CONFIG_PATH: str
     # Model
     MODEL_NAME: str

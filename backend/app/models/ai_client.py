@@ -19,6 +19,11 @@ class AIModelClient:
 
         self.client = InferenceClient(provider=self.provider, model=self.model_name, token=self.hf_token)
 
+    def get_client(self):
+        """
+        Returns the client object for the AI model.
+        """
+        return self.client
         
     def format_messages(self, prompt: str, history: List[Message]) -> List[dict]:
         messages = [{"role": msg.role, "content": msg.content} for msg in history]

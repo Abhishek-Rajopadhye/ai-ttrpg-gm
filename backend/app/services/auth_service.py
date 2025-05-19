@@ -1,20 +1,25 @@
 import requests
 from app.core.config import get_settings
+from firebase_admin import auth
+from fastapi import HTTPException, status, Depends
 
 settings = get_settings()
 
+
 def register_email_user(email: str, password: str, display_name: str = None):
+    """Registers a user with email and password using Firebase REST API."""
     try:
         payload = {
             "email": email,
             "password": password,
             "returnSecureToken": True
         }
+        # Use the Firebase REST API endpoint for email/password signup
         resp = requests.post(settings.FIREBASE_SIGNUP_URL, json=payload)
-        if resp.status_code != 200:
-            raise Exception(resp.json().get("error", {}).get("message", "Registration failed"))
+        resp.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = resp.json()
-        # Optionally update display name
+
+        # Optionally update display name using Firebase REST API
         if display_name:
             update_url = f"https://identitytoolkit.googleapis.com/v1/accounts:update?key={settings.FIREBASE_API_KEY}"
             update_payload = {
@@ -22,91 +27,81 @@ def register_email_user(email: str, password: str, display_name: str = None):
                 "displayName": display_name,
                 "returnSecureToken": True
             }
-            requests.post(update_url, json=update_payload)
+            update_resp = requests.post(update_url, json=update_payload)
+            update_resp.raise_for_status()  # Raise HTTPError for bad responses
+
+        # Return the Firebase response data, which includes idToken
+        # The frontend will use this idToken to authenticate with the backend
         return data
+    except requests.exceptions.RequestException as e:
+        # Handle potential request errors (network issues, bad response status)
+        error_detail = "Registration failed"
+        if e.response is not None and e.response.json() and "error" in e.response.json():
+            error_detail = e.response.json()["error"].get(
+                "message", error_detail)
+        raise Exception(f"Firebase API error: {error_detail}")
     except Exception as e:
-        raise Exception(str(e))
+        # Handle other potential errors
+        raise Exception(
+            f"An unexpected error occurred during registration: {str(e)}")
+
 
 def login_email_user(email: str, password: str):
+    """Logs in a user with email and password using Firebase REST API."""
     try:
         payload = {
             "email": email,
             "password": password,
             "returnSecureToken": True
         }
+        # Use the Firebase REST API endpoint for email/password signin
         resp = requests.post(settings.FIREBASE_SIGNIN_URL, json=payload)
-        if resp.status_code != 200:
-            raise Exception("Invalid credentials")
+        resp.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+
+        # Return the Firebase response data, which includes idToken
+        # The frontend will use this idToken to authenticate with the backend
         return resp.json()
+    except requests.exceptions.RequestException as e:
+        # Handle potential request errors (network issues, bad response status)
+        error_detail = "Invalid credentials"
+        if e.response is not None and e.response.json() and "error" in e.response.json():
+            error_detail = e.response.json()["error"].get(
+                "message", error_detail)
+        raise Exception(f"Firebase API error: {error_detail}")
     except Exception as e:
-        raise Exception(str(e))
+        # Handle other potential errors
+        raise Exception(f"An unexpected error occurred during login: {str(e)}")
+
+
+# Removed get_google_oauth_url and get_github_oauth_url
+# These functions are no longer needed as the frontend handles initiating social login directly.
+
+
+def verify_firebase_token(id_token: str):
+    """Verifies a Firebase ID token using the Firebase Admin SDK."""
+    try:
+        # Verify the ID token while checking if the token is revoked.
+        # This confirms the token is valid and issued by Firebase for your project.
+        decoded_token = auth.verify_id_token(id_token)
+        # Token is valid and contains the user's UID and other claims.
+        # You can access user info like decoded_token['uid'], decoded_token['email'] etc.
+        return decoded_token
+    except Exception as e:
+        # Token is invalid, expired, or verification failed
+        print(f"Error verifying Firebase ID token: {e}")
+        # Raise an exception indicating authentication failure
+        raise Exception("Invalid or expired token")
+
+async def get_current_user():
+    user = auth.get_user()  # Replace with actual Firebase Auth call
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid authentication credentials")
+    return user
+
+async def get_current_user_id(current_user: auth.UserRecord = Depends(get_current_user)):
+    """
+    Dependency to get the current user's ID from Firebase Auth.
+    """
+    return current_user.uid
     
-def get_google_oauth_url():
-    return (
-        "https://accounts.google.com/o/oauth2/v2/auth"
-        f"?client_id={settings.GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"
-        "&response_type=code"
-        "&scope=openid%20email%20profile"
-    )
-
-def get_github_oauth_url():
-    return (
-        "https://github.com/login/oauth/authorize"
-        f"?client_id={settings.GITHUB_CLIENT_ID}"
-        f"&redirect_uri={settings.GITHUB_REDIRECT_URI}"
-        "&scope=read:user user:email"
-    )
-
-def handle_google_oauth_callback(code: str):
-    # Exchange code for tokens
-    token_url = "https://oauth2.googleapis.com/token"
-    data = {
-        "client_id": settings.GOOGLE_CLIENT_ID,
-        "client_secret": settings.GOOGLE_CLIENT_SECRET,
-        "code": code,
-        "grant_type": "authorization_code",
-        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-    }
-    token_resp = requests.post(token_url, data=data)
-    tokens = token_resp.json()
-    id_token = tokens.get("id_token")
-    if not id_token:
-        raise Exception("Google OAuth failed")
-    # Sign in/register with Firebase
-    firebase_payload = {
-        "postBody": f"id_token={id_token}&providerId=google.com",
-        "requestUri": settings.GOOGLE_REDIRECT_URI,
-        "returnIdpCredential": True,
-        "returnSecureToken": True
-    }
-    firebase_resp = requests.post(settings.FIREBASE_IDP_URL, json=firebase_payload)
-    if firebase_resp.status_code != 200:
-        raise Exception(firebase_resp.json().get("error", {}).get("message", "Firebase sign-in with Google failed"))
-    return firebase_resp.json()
-
-def handle_github_oauth_callback(code: str):
-    # Exchange code for access token
-    token_url = "https://github.com/login/oauth/access_token"
-    data = {
-        "client_id": settings.GITHUB_CLIENT_ID,
-        "client_secret": settings.GITHUB_CLIENT_SECRET,
-        "code": code,
-        "redirect_uri": settings.GITHUB_REDIRECT_URI,
-    }
-    headers = {"Accept": "application/json"}
-    token_resp = requests.post(token_url, data=data, headers=headers)
-    access_token = token_resp.json().get("access_token")
-    if not access_token:
-        raise Exception("GitHub OAuth failed")
-    # Sign in/register with Firebase
-    firebase_payload = {
-        "postBody": f"access_token={access_token}&providerId=github.com",
-        "requestUri": settings.GITHUB_REDIRECT_URI,
-        "returnIdpCredential": True,
-        "returnSecureToken": True
-    }
-    firebase_resp = requests.post(settings.FIREBASE_IDP_URL, json=firebase_payload)
-    if firebase_resp.status_code != 200:
-        raise Exception(firebase_resp.json().get("error", {}).get("message", "Firebase sign-in with GitHub failed"))
-    return firebase_resp.json()
