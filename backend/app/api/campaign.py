@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from app.db.campaign import Campaign, CampaignCreate, CampaignUpdate
-from services import campaign_service, auth_service # Assuming services directory is accessible
+from app.services import campaign_service, auth_service # Assuming services directory is accessible
 # from dependencies import get_current_user_id # Import your actual dependency
 
 router = APIRouter()

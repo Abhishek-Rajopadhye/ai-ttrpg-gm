@@ -47,16 +47,6 @@ export default function TopBar({ title, onMenuClick, showMenuButton }) {
                     <Dropdown.Divider />
                     <Dropdown.Item onClick={logout}>Sign out</Dropdown.Item>
                 </Dropdown>
-                {/* Optional: Show a sign out button on desktop */}
-                <div className="hidden md:block">
-                    <Button
-                        color="light"
-                        onClick={logout}
-                        className="!bg-white dark:!bg-gray-800 !text-blue-700 dark:!text-white px-4 py-2 font-semibold shadow hover:!bg-blue-100 dark:hover:!bg-gray-700 transition"
-                    >
-                        Sign Out
-                    </Button>
-                </div>
             </div>
         </Navbar>
     );
