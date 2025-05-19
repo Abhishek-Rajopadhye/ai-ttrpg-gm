@@ -8,27 +8,27 @@ import WorldsPage from "./pages/WorldsPage";
 import { AuthContext } from "./context/AuthContext";
 
 export default function AppRoutes() {
-    const { user, setUser } = useContext(AuthContext);
-    const [loading, setLoading] = useState(true);
+	const { user, setUser } = useContext(AuthContext);
+	const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, [setUser]);
+	useEffect(() => {
+		const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+			setUser(currentUser);
+			setLoading(false);
+		});
+		return () => unsubscribe();
+	}, [setUser]);
 
-    if (loading) return <div className="p-4 text-center">Loading...</div>;
+	if (loading) return <div className="p-4 text-center">Loading...</div>;
 
-    return (
-        <Router>
-            <Routes>
-                <Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/chat" />} />
-                <Route path="/chat" element={user ? <Chatbox /> : <Navigate to="/auth" />} />
-                <Route path="/worlds" element={user ? <WorldsPage /> : <Navigate to="/auth" />} />
-                <Route path="*" element={<Navigate to={user ? "/chat" : "/auth"} />} />
-            </Routes>
-        </Router>
-    );
+	return (
+		<Router>
+			<Routes>
+				<Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/chat" />} />
+				<Route path="/chat" element={user ? <Chatbox /> : <Navigate to="/auth" />} />
+				<Route path="/worlds" element={user ? <WorldsPage /> : <Navigate to="/auth" />} />
+				<Route path="*" element={<Navigate to={user ? "/chat" : "/auth"} />} />
+			</Routes>
+		</Router>
+	);
 }

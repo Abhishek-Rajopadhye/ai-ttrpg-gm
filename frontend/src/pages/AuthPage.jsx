@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Button, Card, Label, TextInput, Alert, Spinner } from "flowbite-react";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
 import axios from "axios";
@@ -10,6 +12,7 @@ export default function AuthPage() {
 	const [name, setName] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState(null);
+	const [loading, setLoading] = useState(false);
 
 	const toggleMode = () => {
 		setError(null);
@@ -77,7 +80,7 @@ export default function AuthPage() {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					'Authorization': `Bearer ${idToken}`
+					Authorization: `Bearer ${idToken}`,
 				},
 				body: JSON.stringify({ id_token: idToken }), // Match backend expected body
 			});
@@ -100,6 +103,7 @@ export default function AuthPage() {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError(null);
+		setLoading(true);
 		try {
 			const endpoint = isRegister ? "/api/auth/register/email" : "/api/auth/login/email";
 			const method = isRegister ? "POST" : "GET";
@@ -116,6 +120,8 @@ export default function AuthPage() {
 			}
 		} catch (err) {
 			setError(err.response?.data?.detail || err.message);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -151,67 +157,81 @@ export default function AuthPage() {
 	}, []);
 
 	return (
-		<div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-xl">
-			<h2 className="text-2xl font-semibold text-center mb-4 text-black">{isRegister ? "Register" : "Login"}</h2>
-			<form onSubmit={handleSubmit} className="space-y-4">
-				{isRegister && (
-					<input
-						type="text"
-						placeholder="Name"
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						className="w-full p-2 border border-black rounded-lg text-gray-700"
-						required
-					/>
-				)}
-				<input
-					type="email"
-					placeholder="Email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					className="w-full p-2 border border-black rounded-lg text-gray-700"
-					required
-				/>
-				<input
-					type="password"
-					placeholder="Password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-					className="w-full p-2 border border-black rounded-lg text-gray-700"
-					required
-				/>
-				{error && <div className="text-red-500 text-sm">{error}</div>}
-				<button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-					{isRegister ? "Register" : "Login"}
-				</button>
-			</form>
-			<div className="my-4 flex items-center before:mt-0.5 before:flex-1 before:border-t before:border-neutral-300 after:mt-0.5 after:flex-1 after:border-t after:border-neutral-300">
-				<p className="mx-4 mb-0 text-center font-semibold text-neutral-600">OR</p>
-			</div>
-			<div className="flex flex-col gap-2">
-				<button
-					onClick={() => {
-						handleGoogleLogin();
-					}}
-					className="w-full bg-gray-600 text-white p-2 rounded-lg hover:bg-black"
-				>
-					Continue with Google
-				</button>
-				<button
-					onClick={() => {
-						handleGitHubLogin();
-					}}
-					className="w-full bg-gray-600 text-white p-2 rounded-lg hover:bg-black"
-				>
-					Continue with GitHub
-				</button>
-			</div>
-			<p className="text-center text-sm mt-4 text-gray-500">
-				{isRegister ? "Already have an account?" : "Don't have an account?"}
-				<button onClick={toggleMode} className="ml-1 text-blue-500 hover:underline ">
-					{isRegister ? "Login" : "Register"}
-				</button>
-			</p>
+		<div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-700  text-black dark:text-white">
+			<Card className="w-full max-w-md shadow-xl">
+				<h2 className="text-2xl font-semibold text-center mb-4">{isRegister ? "Register" : "Login"}</h2>
+				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
+					{isRegister && (
+						<div>
+							<Label htmlFor="name" value="Name" />
+							<TextInput
+								id="name"
+								type="text"
+								placeholder="Name"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								required
+							/>
+						</div>
+					)}
+					<div>
+						<Label htmlFor="email" value="Email" />
+						<TextInput
+							id="email"
+							type="email"
+							placeholder="Email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							required
+						/>
+					</div>
+					<div>
+						<Label htmlFor="password" value="Password" />
+						<TextInput
+							id="password"
+							type="password"
+							placeholder="Password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							required
+						/>
+					</div>
+					{error && <Alert color="failure">{error}</Alert>}
+					<Button type="submit" color="blue" disabled={loading}>
+						{loading ? (
+							<>
+								<Spinner size="sm" className="mr-2" />
+								{isRegister ? "Registering..." : "Logging in..."}
+							</>
+						) : isRegister ? (
+							"Register"
+						) : (
+							"Login"
+						)}
+					</Button>
+				</form>
+				<div className="my-4 flex items-center">
+					<div className="flex-1 border-t border-neutral-300" />
+					<span className="mx-4 text-neutral-600 dark:text-neutral-300 font-semibold">OR</span>
+					<div className="flex-1 border-t border-neutral-300" />
+				</div>
+				<div className="flex flex-col gap-2">
+					<Button color="light" onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-2">
+						<FaGoogle className="text-lg" />
+						Continue with Google
+					</Button>
+					<Button color="light" onClick={handleGitHubLogin} className="w-full flex items-center justify-center gap-2">
+						<FaGithub className="text-lg" />
+						Continue with GitHub
+					</Button>
+				</div>
+				<p className="text-center text-sm mt-4 text-gray-500  dark:text-neutral-300">
+					{isRegister ? "Already have an account?" : "Don't have an account?"}
+					<button onClick={toggleMode} className="ml-1 text-blue-500 hover:underline" type="button">
+						{isRegister ? "Login" : "Register"}
+					</button>
+				</p>
+			</Card>
 		</div>
 	);
 }
