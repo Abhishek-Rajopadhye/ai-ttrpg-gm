@@ -25,7 +25,7 @@ class Campaign(CampaignBase):
     world_definition_id: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class GameState(BaseModel):
