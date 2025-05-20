@@ -15,6 +15,7 @@ from app.services.item_service import (
 
 router = APIRouter()
 
+
 @router.get("/items/{item_id}", response_model=Item)
 def read_item(item_id: str):
     """
@@ -39,7 +40,9 @@ def read_item(item_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving item: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving item: {e}")
+
 
 @router.get("/items/user/{user_id}", response_model=List[Item])
 def read_items_by_user(user_id: str):
@@ -60,7 +63,9 @@ def read_items_by_user(user_id: str):
         items = get_all_items_of_user(user_id)
         return items
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving items for user: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving items for user: {e}")
+
 
 @router.get("/items/campaign/{campaign_id}", response_model=List[Item])
 def read_items_by_campaign(campaign_id: str):
@@ -81,7 +86,9 @@ def read_items_by_campaign(campaign_id: str):
         items = get_items_by_campaign(campaign_id)
         return items
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving items for campaign: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving items for campaign: {e}")
+
 
 @router.get("/items/character/{character_id}", response_model=List[Item])
 def read_items_by_character(character_id: str):
@@ -102,7 +109,10 @@ def read_items_by_character(character_id: str):
         items = get_items_by_character(character_id)
         return items
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving items for character: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving items for character: {e}")
+
 
 @router.get("/items/world/{world_id}", response_model=List[Item])
 def read_items_by_world(world_id: str):
@@ -123,7 +133,9 @@ def read_items_by_world(world_id: str):
         items = get_items_by_world(world_id)
         return items
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving items for world: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving items for world: {e}")
+
 
 @router.post("/items/", response_model=str)
 def create_item_route(item: ItemCreate):
@@ -144,7 +156,9 @@ def create_item_route(item: ItemCreate):
         item_id = create_item(item)
         return item_id
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating item: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error creating item: {e}")
+
 
 @router.put("/items/{item_id}", response_model=Item)
 def update_item_route(item_id: str, item: Item):
@@ -171,7 +185,9 @@ def update_item_route(item_id: str, item: Item):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating item: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error updating item: {e}")
+
 
 @router.delete("/items/{item_id}")
 def delete_item_route(item_id: str):
@@ -197,4 +213,5 @@ def delete_item_route(item_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting item: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error deleting item: {e}")

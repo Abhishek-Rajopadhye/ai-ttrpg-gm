@@ -5,7 +5,6 @@ from app.core.firebase import firebase_db
 from datetime import datetime, timezone
 from google.cloud.exceptions import NotFound, GoogleCloudError
 
-
 COLLECTION_NAME = "worlds"
 
 
@@ -62,7 +61,8 @@ def get_all_worlds_of_user(user_id: str) -> list:
             f"Database error while fetching worlds for user: {db_error}")
     except Exception as general_error:
         raise Exception(
-            f"Unexpected error while fetching worlds for user: {general_error}")
+            f"Unexpected error while fetching worlds for user: {general_error}"
+        )
 
 
 def create_world(world: WorldCreate) -> str:

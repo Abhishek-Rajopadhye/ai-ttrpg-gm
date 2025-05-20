@@ -5,8 +5,10 @@ from app.services.ai_service import generate_response
 
 router = APIRouter()
 
+
 class GenerateRequest(BaseModel):
     prompt: str
+
 
 @router.post("/generate")
 async def generate_response_endpoint(data: GenerateRequest):

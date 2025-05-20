@@ -38,8 +38,8 @@ def read_world(world_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error retrieving world: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving world: {e}")
 
 
 @router.get("/user/{user_id}", response_model=List[World])
@@ -61,8 +61,8 @@ def read_worlds_by_user(user_id: str):
         worlds = get_all_worlds_of_user(user_id)
         return worlds
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error retrieving worlds for user: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving worlds for user: {e}")
 
 
 @router.post("/", response_model=str)
@@ -84,8 +84,8 @@ def create_world_route(world: WorldCreate):
         world_id = create_world(world)
         return world_id
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error creating world: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error creating world: {e}")
 
 
 @router.put("/{world_id}", response_model=World)
@@ -113,8 +113,8 @@ def update_world_route(world_id: str, world: World):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error updating world: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error updating world: {e}")
 
 
 @router.put("/worlds/{world_id}/items/{item_id}")
@@ -128,6 +128,7 @@ def add_item_to_world(world_id: str, item_id: str):
     world["item_ids"] = world.get("item_ids", []) + [item_id]
     update_world(world_id, World(**world))
     return {"message": "Item added to world"}
+
 
 @router.delete("/{world_id}")
 def delete_world_route(world_id: str):
@@ -153,5 +154,5 @@ def delete_world_route(world_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error deleting world: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error deleting world: {e}")

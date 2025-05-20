@@ -16,7 +16,8 @@ def register_email_user(email: str, password: str, display_name: str = None):
         }
         # Use the Firebase REST API endpoint for email/password signup
         resp = requests.post(settings.FIREBASE_SIGNUP_URL, json=payload)
-        resp.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        resp.raise_for_status(
+        )  # Raise HTTPError for bad responses (4xx or 5xx)
         data = resp.json()
 
         # Optionally update display name using Firebase REST API
@@ -36,7 +37,8 @@ def register_email_user(email: str, password: str, display_name: str = None):
     except requests.exceptions.RequestException as e:
         # Handle potential request errors (network issues, bad response status)
         error_detail = "Registration failed"
-        if e.response is not None and e.response.json() and "error" in e.response.json():
+        if e.response is not None and e.response.json(
+        ) and "error" in e.response.json():
             error_detail = e.response.json()["error"].get(
                 "message", error_detail)
         raise Exception(f"Firebase API error: {error_detail}")
@@ -56,7 +58,8 @@ def login_email_user(email: str, password: str):
         }
         # Use the Firebase REST API endpoint for email/password signin
         resp = requests.post(settings.FIREBASE_SIGNIN_URL, json=payload)
-        resp.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        resp.raise_for_status(
+        )  # Raise HTTPError for bad responses (4xx or 5xx)
 
         # Return the Firebase response data, which includes idToken
         # The frontend will use this idToken to authenticate with the backend
@@ -64,7 +67,8 @@ def login_email_user(email: str, password: str):
     except requests.exceptions.RequestException as e:
         # Handle potential request errors (network issues, bad response status)
         error_detail = "Invalid credentials"
-        if e.response is not None and e.response.json() and "error" in e.response.json():
+        if e.response is not None and e.response.json(
+        ) and "error" in e.response.json():
             error_detail = e.response.json()["error"].get(
                 "message", error_detail)
         raise Exception(f"Firebase API error: {error_detail}")
@@ -92,6 +96,7 @@ def verify_firebase_token(id_token: str):
         # Raise an exception indicating authentication failure
         raise Exception("Invalid or expired token")
 
+
 async def get_current_user():
     user = auth.get_user()  # Replace with actual Firebase Auth call
     if not user:
@@ -99,9 +104,10 @@ async def get_current_user():
                             detail="Invalid authentication credentials")
     return user
 
-async def get_current_user_id(current_user: auth.UserRecord = Depends(get_current_user)):
+
+async def get_current_user_id(
+        current_user: auth.UserRecord = Depends(get_current_user)):
     """
     Dependency to get the current user's ID from Firebase Auth.
     """
     return current_user.uid
-    

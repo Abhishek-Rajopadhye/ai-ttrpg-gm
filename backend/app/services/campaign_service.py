@@ -23,8 +23,8 @@ def get_campaign(campaign_id: str) -> Optional[dict]:
         Exception: If there is a general error. 
     """
     try:
-        campaign_ref = firebase_db.collection(
-            COLLECTION_NAME).document(campaign_id)
+        campaign_ref = firebase_db.collection(COLLECTION_NAME).document(
+            campaign_id)
         campaign_doc = campaign_ref.get()
         if campaign_doc.exists:
             return campaign_doc.to_dict()
@@ -62,7 +62,8 @@ def get_all_campaigns_of_user(user_id: str) -> List[Campaign]:
             f"Database error while fetching campaigns for user: {db_error}")
     except Exception as general_error:
         raise Exception(
-            f"Unexpected error while fetching campaigns for user: {general_error}")
+            f"Unexpected error while fetching campaigns for user: {general_error}"
+        )
 
 
 def create_campaign(campaign: CampaignCreate) -> str:
@@ -113,8 +114,8 @@ def update_campaign(campaign_id: str, campaign: Campaign) -> Optional[dict]:
         Exception: If there is a general error.
     """
     try:
-        campaign_ref = firebase_db.collection(
-            COLLECTION_NAME).document(campaign_id)
+        campaign_ref = firebase_db.collection(COLLECTION_NAME).document(
+            campaign_id)
         campaign_data = campaign.model_dump(exclude={"id"})
         campaign_ref.update(campaign_data)
         updated_doc = campaign_ref.get()
@@ -148,8 +149,8 @@ def delete_campaign(campaign_id: str) -> bool:
         Exception: If there is a general error.
     """
     try:
-        campaign_ref = firebase_db.collection(
-            COLLECTION_NAME).document(campaign_id)
+        campaign_ref = firebase_db.collection(COLLECTION_NAME).document(
+            campaign_id)
         campaign_ref.delete()
         return True
     except NotFound as not_found_error:

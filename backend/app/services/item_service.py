@@ -87,7 +87,8 @@ def get_items_by_world(world_id: str) -> List[Item]:
             f"Database error while fetching items for world: {db_error}")
     except Exception as general_error:
         raise Exception(
-            f"Unexpected error while fetching items for world: {general_error}")
+            f"Unexpected error while fetching items for world: {general_error}"
+        )
 
 
 def get_items_by_campaign(campaign_id: str) -> List[Item]:
@@ -114,7 +115,8 @@ def get_items_by_campaign(campaign_id: str) -> List[Item]:
             f"Database error while fetching items for campaign: {db_error}")
     except Exception as general_error:
         raise Exception(
-            f"Unexpected error while fetching items for campaign: {general_error}")
+            f"Unexpected error while fetching items for campaign: {general_error}"
+        )
 
 
 def get_items_by_character(character_id: str) -> List[Item]:
@@ -141,7 +143,8 @@ def get_items_by_character(character_id: str) -> List[Item]:
             f"Database error while fetching items for character: {db_error}")
     except Exception as general_error:
         raise Exception(
-            f"Unexpected error while fetching items for character: {general_error}")
+            f"Unexpected error while fetching items for character: {general_error}"
+        )
 
 
 def create_item(item: ItemCreate) -> str:

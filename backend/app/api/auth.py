@@ -37,7 +37,8 @@ if not firebase_admin._apps:
         # For production, you'd want robust error handling here.
     except Exception as e:
         print(
-            f"An unexpected error occurred during Firebase Admin SDK initialization: {e}")
+            f"An unexpected error occurred during Firebase Admin SDK initialization: {e}"
+        )
 
 
 class EmailPasswordLogin(BaseModel):
@@ -56,10 +57,14 @@ async def register_email(data: EmailPasswordRegister):
     """Handles email/password registration."""
     try:
         # The auth_service function handles the registration and returns Firebase data including idToken
-        firebase_data = register_email_user(
-            data.email, data.password, data.display_name)
+        firebase_data = register_email_user(data.email, data.password,
+                                            data.display_name)
         # Return the Firebase data to the frontend. The frontend will use the idToken.
-        return JSONResponse(content={"message": "User registered successfully", "firebase_data": firebase_data})
+        return JSONResponse(
+            content={
+                "message": "User registered successfully",
+                "firebase_data": firebase_data
+            })
     except Exception as e:
         # Catch exceptions from the service layer and return appropriate HTTP response
         raise HTTPException(status_code=400, detail=str(e))
@@ -72,10 +77,14 @@ async def login_email(data: EmailPasswordLogin):
         # The auth_service function handles the login and returns Firebase data including idToken
         firebase_data = login_email_user(data.email, data.password)
         # Return the Firebase data to the frontend. The frontend will use the idToken.
-        return JSONResponse(content={"message": "Login successful", "firebase_data": firebase_data})
+        return JSONResponse(content={
+            "message": "Login successful",
+            "firebase_data": firebase_data
+        })
     except Exception as e:
         # Catch exceptions from the service layer and return appropriate HTTP response
         raise HTTPException(status_code=401, detail=str(e))
+
 
 # Removed /login/google and /login/github endpoints
 # These are now handled directly by the frontend Firebase SDK.
@@ -91,10 +100,14 @@ async def verify_token(id_token: str = Body(..., embed=True)):
         decoded_token = verify_firebase_token(id_token)
         # The decoded_token contains user information (uid, email, etc.)
         # This confirms the user's identity to the backend.
-        return JSONResponse(content={"message": "Token verified successfully", "user": decoded_token})
+        return JSONResponse(content={
+            "message": "Token verified successfully",
+            "user": decoded_token
+        })
     except Exception as e:
         # If token verification fails, return 401 Unauthorized
         raise HTTPException(status_code=401, detail=str(e))
+
 
 # You can create a dependency to easily protect endpoints
 
@@ -106,7 +119,8 @@ async def get_current_user(id_token: str = Header(..., alias="Authorization")):
         # Extract the token part
         if not id_token.startswith("Bearer "):
             raise ValueError(
-                "Invalid Authorization header format. Expected 'Bearer <token>'")
+                "Invalid Authorization header format. Expected 'Bearer <token>'"
+            )
         token = id_token.split(" ")[1]
 
         # Verify the token using the service function
@@ -115,8 +129,9 @@ async def get_current_user(id_token: str = Header(..., alias="Authorization")):
         return decoded_token
     except (ValueError, Exception) as e:
         # If verification fails, raise HTTPException
-        raise HTTPException(
-            status_code=401, detail=f"Authentication failed: {str(e)}")
+        raise HTTPException(status_code=401,
+                            detail=f"Authentication failed: {str(e)}")
+
 
 # Example of a protected endpoint using the dependency
 
@@ -129,4 +144,6 @@ async def get_protected_data(current_user: dict = Depends(get_current_user)):
     user_uid = current_user.get('uid')
     user_email = current_user.get('email', 'N/A')
 
-    return {"data": f"This is protected data for user {user_uid} ({user_email})"}
+    return {
+        "data": f"This is protected data for user {user_uid} ({user_email})"
+    }

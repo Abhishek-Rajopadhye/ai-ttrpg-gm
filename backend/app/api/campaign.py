@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 from app.db.campaign import Campaign, CampaignCreate
 from app.services.campaign_service import get_campaign, get_all_campaigns_of_user, create_campaign, update_campaign, delete_campaign
+from app.services.character_service import get_character
 
 router = APIRouter()
 
@@ -31,7 +32,9 @@ def read_campaign(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving campaign: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving campaign: {e}")
+
 
 @router.get("/user/{user_id}", response_model=List[Campaign])
 def read_campaigns_by_user(user_id: str):
@@ -52,7 +55,9 @@ def read_campaigns_by_user(user_id: str):
         campaigns = get_all_campaigns_of_user(user_id)
         return campaigns
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving campaigns for user: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error retrieving campaigns for user: {e}")
+
 
 @router.post("/", response_model=str)
 def create_campaign(campaign: CampaignCreate):
@@ -73,7 +78,9 @@ def create_campaign(campaign: CampaignCreate):
         campaign_id = create_campaign(campaign)
         return campaign_id
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating campaign: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error creating campaign: {e}")
+
 
 @router.put("/{campaign_id}", response_model=Campaign)
 def update_campaign(campaign_id: str, campaign: Campaign):
@@ -100,7 +107,27 @@ def update_campaign(campaign_id: str, campaign: Campaign):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating campaign: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error updating campaign: {e}")
+
+
+@router.put("/{campaign_id}/characters/{character_id}")
+def add_character_to_campaign(campaign_id: str, character_id: str):
+    campaign = get_campaign(campaign_id)
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    character = get_character(character_id)
+    if character is None:
+        raise HTTPException(status_code=404, detail="Character not found")
+    if character["type"] == "PC":
+        campaign["player_character_ids"] = campaign.get(
+            "player_character_ids", []) + [character_id]
+    else:
+        campaign["active_npc_character_ids"] = campaign.get(
+            "active_npc_character_ids", []) + [character_id]
+    update_campaign(campaign_id, Campaign(**campaign))
+    return {"message": "Character added to campaign"}
+
 
 @router.delete("/{campaign_id}")
 def delete_campaign(campaign_id: str):
@@ -126,4 +153,5 @@ def delete_campaign(campaign_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting campaign: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Error deleting campaign: {e}")
