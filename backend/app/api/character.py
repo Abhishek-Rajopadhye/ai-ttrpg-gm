@@ -1,4 +1,4 @@
-# routes/characters.py
+# routes/character.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from app.db.character import Character, CharacterCreate, CharacterUpdate

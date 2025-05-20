@@ -1,69 +1,129 @@
-# routes/campaigns.py
-from fastapi import APIRouter, Depends, HTTPException, status
+# routes/campaign.py
+from fastapi import APIRouter, HTTPException
 from typing import List
-from app.db.campaign import Campaign, CampaignCreate, CampaignUpdate
-from app.services import campaign_service, auth_service # Assuming services directory is accessible
-# from dependencies import get_current_user_id # Import your actual dependency
+from app.db.campaign import Campaign, CampaignCreate
+from app.services.campaign_service import get_campaign, get_all_campaigns_of_user, create_campaign, update_campaign, delete_campaign
 
 router = APIRouter()
 
 
-@router.post("/", response_model=Campaign, status_code=status.HTTP_201_CREATED)
-def create_campaign_route(
-    campaign_data: CampaignCreate,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
-    """
-    Creates a new campaign for the authenticated user.
-    """
-    return campaign_service.create_campaign(user_id, campaign_data)
-
-@router.get("/", response_model=List[Campaign])
-def get_all_campaigns_route(
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
-    """
-    Retrieves all campaigns owned by the authenticated user.
-    """
-    return campaign_service.get_all_campaigns(user_id)
-
 @router.get("/{campaign_id}", response_model=Campaign)
-def get_campaign_route(
-    campaign_id: str,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
+def read_campaign(campaign_id: str):
     """
-    Retrieves a specific campaign by its ID, ensuring it belongs to the user.
+    Retrieve a campaign by its ID.
+
+    Args:
+        campaign_id (str): The ID of the campaign.
+
+    Returns:
+        Campaign: The campaign object.
+
+    Raises:
+        HTTPException: 
+            404 if not found
+            500 for other errors
     """
-    campaign = campaign_service.get_campaign(user_id, campaign_id)
-    if campaign is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found or you do not have access")
-    return campaign
+    try:
+        campaign = get_campaign(campaign_id)
+        if campaign is None:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return campaign
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving campaign: {e}")
+
+@router.get("/user/{user_id}", response_model=List[Campaign])
+def read_campaigns_by_user(user_id: str):
+    """
+    Retrieve all campaigns for a specific user.
+
+    Args:
+        user_id (str): The user's ID.
+
+    Returns:
+        List[Campaign]: List of campaign objects.
+
+    Raises:
+        HTTPException: 
+            500 for errors
+    """
+    try:
+        campaigns = get_all_campaigns_of_user(user_id)
+        return campaigns
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving campaigns for user: {e}")
+
+@router.post("/", response_model=str)
+def create_campaign(campaign: CampaignCreate):
+    """
+    Create a new campaign.
+
+    Args:
+        campaign (CampaignCreate): The campaign data.
+
+    Returns:
+        str: The ID of the newly created campaign.
+
+    Raises:
+        HTTPException: 
+            500 for errors
+    """
+    try:
+        campaign_id = create_campaign(campaign)
+        return campaign_id
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating campaign: {e}")
 
 @router.put("/{campaign_id}", response_model=Campaign)
-def update_campaign_route(
-    campaign_id: str,
-    update_data: CampaignUpdate,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
+def update_campaign(campaign_id: str, campaign: Campaign):
     """
-    Updates an existing campaign, ensuring it belongs to the user.
-    """
-    updated_campaign = campaign_service.update_campaign(user_id, campaign_id, update_data)
-    if updated_campaign is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found or you do not have access")
-    return updated_campaign
+    Update an existing campaign.
 
-@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_campaign_route(
-    campaign_id: str,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
-    """
-    Deletes a campaign, ensuring it belongs to the user.
-    """
-    success = campaign_service.delete_campaign(user_id, campaign_id)
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found or you do not have access")
-    return {"detail": "Campaign deleted successfully"}
+    Args:
+        campaign_id (str): The ID of the campaign to update.
+        campaign (Campaign): The updated campaign data.
 
+    Returns:
+        Campaign: The updated campaign object.
+
+    Raises:
+        HTTPException: 
+            404 if not found
+            500 for other errors
+    """
+    try:
+        updated_campaign = update_campaign(campaign_id, campaign)
+        if updated_campaign is None:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return updated_campaign
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating campaign: {e}")
+
+@router.delete("/{campaign_id}")
+def delete_campaign(campaign_id: str):
+    """
+    Delete a campaign by its ID.
+
+    Args:
+        campaign_id (str): The ID of the campaign to delete.
+
+    Returns:
+        dict: Message indicating deletion status.
+
+    Raises:
+        HTTPException: 
+            404 if not found
+            500 for other errors
+    """
+    try:
+        deleted = delete_campaign(campaign_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        return {"message": "Campaign deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting campaign: {e}")

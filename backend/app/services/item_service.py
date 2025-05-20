@@ -1,62 +1,235 @@
 # services/item_service.py
 from typing import Optional, List
-from app.db.item import Item, ItemCreate, ItemUpdate
-from app.core.firebase import firebase_db, get_document, get_user_documents, create_document, update_document, delete_document
+from app.db.item import Item, ItemCreate
+from app.core.firebase import firebase_db
+from google.cloud.exceptions import NotFound, GoogleCloudError
 
 COLLECTION_NAME = "items"
 
-def create_item(user_id: str, item_data: ItemCreate) -> Item:
-    """
-    Creates a new item for a specific user in Firestore.
-    """
-    data = item_data.model_dump()
-    data["user_id"] = user_id # Assign the user ID
-    doc_id = create_document(COLLECTION_NAME, data)
-    created_item_data = get_document(COLLECTION_NAME, doc_id)
-    return Item(id=doc_id, **created_item_data)
 
-def get_item(user_id: str, item_id: str) -> Optional[Item]:
+def get_item(item_id: str) -> Optional[dict]:
     """
-    Fetches a specific item by its ID, ensuring it belongs to the user.
+    Retrieve an item by its ID.
+
+    Args:
+        item_id (str): The ID of the item.
+
+    Returns:
+        dict or None: The item data as a dictionary if found, else None.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    item_data = get_document(COLLECTION_NAME, item_id)
-    if item_data and item_data.get("user_id") == user_id:
-        return Item(id=item_id, **item_data)
-    return None # Item not found or does not belong to the user
+    try:
+        item_ref = firebase_db.collection(COLLECTION_NAME).document(item_id)
+        item_doc = item_ref.get()
+        if item_doc.exists:
+            return item_doc.to_dict()
+        else:
+            return None
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching item: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching item: {general_error}")
 
-def get_all_items(user_id: str) -> List[Item]:
+
+def get_all_items_of_user(user_id: str) -> List[Item]:
     """
-    Fetches all items owned by a specific user.
+    Fetch all items owned by a specific user.
+
+    Args:
+        user_id (str): The user's ID.
+
+    Returns:
+        List[Item]: List of Item objects.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    docs = firebase_db.collection(COLLECTION_NAME).where("user_id", "==", user_id).stream()
-    items = [Item(id=doc.id, **doc.to_dict()) for doc in docs]
-    return items
+    try:
+        docs = firebase_db.collection(COLLECTION_NAME).where(
+            "user_id", "==", user_id).get()
+        items = [Item(id=doc.id, **doc.to_dict()) for doc in docs]
+        return items
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching items for user: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching items for user: {general_error}")
 
-def update_item(user_id: str, item_id: str, update_data: ItemUpdate) -> Optional[Item]:
+
+def get_items_by_world(world_id: str) -> List[Item]:
     """
-    Updates an existing item, ensuring it belongs to the user.
+    Fetch all items associated with a specific world.
+
+    Args:
+        world_id (str): The ID of the world.
+
+    Returns:
+        List[Item]: List of Item objects.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    existing_item = get_item(user_id, item_id)
-    if not existing_item:
-        return None # Item not found or does not belong to the user
+    try:
+        docs = firebase_db.collection(COLLECTION_NAME).where(
+            "world_id", "==", world_id).get()
+        items = [Item(id=doc.id, **doc.to_dict()) for doc in docs]
+        return items
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching items for world: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching items for world: {general_error}")
 
-    update_dict = update_data.model_dump(exclude_unset=True)
 
-    if not update_dict:
-        return existing_item
-
-    update_document(COLLECTION_NAME, item_id, update_dict)
-    return get_item(user_id, item_id)
-
-def delete_item(user_id: str, item_id: str) -> bool:
+def get_items_by_campaign(campaign_id: str) -> List[Item]:
     """
-    Deletes an item, ensuring it belongs to the user.
-    Returns True if deleted, False otherwise.
+    Fetch all items associated with a specific campaign.
+
+    Args:
+        campaign_id (str): The ID of the campaign.
+
+    Returns:
+        List[Item]: List of Item objects.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    existing_item = get_item(user_id, item_id)
-    if not existing_item:
-        return False # Item not found or does not belong to the user
+    try:
+        docs = firebase_db.collection(COLLECTION_NAME).where(
+            "campaign_id", "==", campaign_id).get()
+        items = [Item(id=doc.id, **doc.to_dict()) for doc in docs]
+        return items
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching items for campaign: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching items for campaign: {general_error}")
 
-    delete_document(COLLECTION_NAME, item_id)
-    return True
 
+def get_items_by_character(character_id: str) -> List[Item]:
+    """
+    Fetch all items associated with a specific character.
+
+    Args:
+        character_id (str): The ID of the character.
+
+    Returns:
+        List[Item]: List of Item objects.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error..
+    """
+    try:
+        docs = firebase_db.collection(COLLECTION_NAME).where(
+            "character_id", "==", character_id).get()
+        items = [Item(id=doc.id, **doc.to_dict()) for doc in docs]
+        return items
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching items for character: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching items for character: {general_error}")
+
+
+def create_item(item: ItemCreate) -> str:
+    """
+    Create a new item.
+
+    Args:
+        item (ItemCreate): The item data.
+
+    Returns:
+        str: The ID of the newly created item.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
+    """
+    try:
+        item_data = item.dict()
+        item_ref = firebase_db.collection(COLLECTION_NAME).document()
+        item_ref.set(item_data)
+        return item_ref.id
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while creating item: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while creating item: {general_error}")
+
+
+def update_item(item_id: str, item: Item) -> Optional[dict]:
+    """
+    Update an existing item.
+
+    Args:
+        item_id (str): The ID of the item to update.
+        item (Item): The updated item data.
+
+    Returns:
+        dict or None: The updated item data as a dictionary if successful, else None.
+
+    Raises:
+        NotFound: If the item does not exist.
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
+    """
+    try:
+        item_ref = firebase_db.collection(COLLECTION_NAME).document(item_id)
+        item_data = item.model_dump(exclude={"id"})
+        item_ref.update(item_data)
+        updated_doc = item_ref.get()
+        if updated_doc.exists:
+            return updated_doc.to_dict()
+        else:
+            return None
+    except NotFound as not_found_error:
+        raise NotFound(f"Item not found: {not_found_error}")
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while updating item: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while updating item: {general_error}")
+
+
+def delete_item(item_id: str) -> bool:
+    """
+    Delete an item by its ID.
+
+    Args:
+        item_id (str): The ID of the item to delete.
+
+    Returns:
+        bool: True if deletion was successful.
+
+    Raises:
+        NotFound: If the item does not exist.
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
+    """
+    try:
+        item_ref = firebase_db.collection(COLLECTION_NAME).document(item_id)
+        item_ref.delete()
+        return True
+    except NotFound as not_found_error:
+        raise NotFound(f"Item not found: {not_found_error}")
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while deleting item: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while deleting item: {general_error}")

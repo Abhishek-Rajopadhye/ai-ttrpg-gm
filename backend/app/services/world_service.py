@@ -1,104 +1,157 @@
 # services/world_service.py
-from typing import Optional, List
-from app.db.world import World, WorldCreate, WorldUpdate
-from app.core.firebase import firebase_db, get_document, get_user_documents, create_document, update_document, delete_document
+from typing import Optional
+from app.db.world import WorldCreate, World
+from app.core.firebase import firebase_db
+from datetime import datetime, timezone
+from google.cloud.exceptions import NotFound, GoogleCloudError
+
 
 COLLECTION_NAME = "worlds"
 
 
-def create_world(user_id: str, world_data: WorldCreate) -> World:
+def get_world(world_id: str) -> Optional[dict]:
     """
-    Creates a new world for a specific user in Firestore.
+    Retrieve a world by its ID.
+
+    Args:
+        world_id (str): The ID of the world.
+
+    Returns:
+        dict or None: The world data as a dictionary if found, else None.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    data = world_data.model_dump()
-    data["user_id"] = user_id  # Assign the user ID
-    doc_id = create_document(COLLECTION_NAME, data)
-    # Fetch the newly created document to return the full World model with ID
-    created_world_data = get_document(COLLECTION_NAME, doc_id)
-    return World(id=doc_id, **created_world_data)
+    try:
+        world_ref = firebase_db.collection(COLLECTION_NAME).document(world_id)
+        world_doc = world_ref.get()
+        if world_doc.exists:
+            return world_doc.to_dict()
+        else:
+            return None
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching world: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching world: {general_error}")
 
 
-def get_world(user_id: str, world_id: str) -> Optional[World]:
+def get_all_worlds_of_user(user_id: str) -> list:
     """
-    Fetches a specific world by its ID, ensuring it belongs to the user.
+    Fetch all worlds owned by a specific user.
+
+    Args:
+        user_id (str): The user's ID.
+
+    Returns:
+        list: List of world data as dictionaries.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    world_data = get_document(COLLECTION_NAME, world_id)
-    if world_data and world_data.get("user_id") == user_id:
-        return World(id=world_id, **world_data)
-    return None  # World not found or does not belong to the user
+    try:
+        docs = firebase_db.collection(COLLECTION_NAME).where(
+            "user_id", "==", user_id).get()
+        worlds = [doc.to_dict() for doc in docs]
+        return worlds
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while fetching worlds for user: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while fetching worlds for user: {general_error}")
 
 
-def get_all_worlds(user_id: str) -> List[World]:
+def create_world(world: WorldCreate) -> str:
     """
-    Fetches all worlds owned by a specific user.
+    Create a new world.
+
+    Args:
+        world (WorldCreate): The world data.
+
+    Returns:
+        str: The ID of the newly created world.
+
+    Raises:
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    world_docs = get_user_documents(COLLECTION_NAME, user_id)
-    # Convert Firestore documents (dicts) to Pydantic models
-    # Need to include the document ID in the data
-    worlds = []
-    for doc_data in world_docs:
-        # Firestore helper methods should ideally include the doc ID
-        # Let's adjust get_user_documents or assume it returns dicts with ID
-        # For now, assume the helper returns dicts without ID and requires manual addition
-        # A better helper would return a list of {'id': doc.id, **doc.to_dict()}
-        # For this example, let's assume doc_data already includes 'id' if using an improved helper
-        # If not, you'd need to fetch again or modify the helper.
-        # Let's simulate adding ID if it's missing based on a hypothetical helper update
-        if 'id' not in doc_data:
-            # This part depends heavily on the actual helper implementation
-            # A robust helper would return ID. Assuming for now data includes ID.
-            pass  # Placeholder, ideally doc_data has 'id'
-
-        # If your helper doesn't return ID, you'd need to fetch individually or adjust helper
-        # Example if helper returns list of dicts without ID:
-        # doc_ref = db.collection(COLLECTION_NAME).where("user_id", "==", user_id).stream()
-        # worlds = [World(id=doc.id, **doc.to_dict()) for doc in doc_ref]
-        # Let's use the simplified helper for now and assume it works as intended
-        # Assuming doc_data includes 'id' from helper
-        worlds.append(World(**doc_data))
-
-    # Correction: The `get_user_documents` helper returns a list of dicts from `to_dict()`.
-    # We need the document ID to create the Pydantic model.
-    # Let's refine the fetching logic here or improve the helper.
-    # A better way using the stream directly:
-    docs = firebase_db.collection(COLLECTION_NAME).where(
-        "user_id", "==", user_id).stream()
-    worlds = [World(id=doc.id, **doc.to_dict()) for doc in docs]
-
-    return worlds
+    try:
+        world_data = world.dict()
+        world_data["created_at"] = datetime.now(timezone.utc)
+        world_ref = firebase_db.collection(COLLECTION_NAME).document()
+        world_ref.set(world_data)
+        return world_ref.id
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while creating world: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while creating world: {general_error}")
 
 
-def update_world(user_id: str, world_id: str, update_data: WorldUpdate) -> Optional[World]:
+def update_world(world_id: str, world: World) -> Optional[dict]:
     """
-    Updates an existing world, ensuring it belongs to the user.
+    Update an existing world.
+
+    Args:
+        world_id (str): The ID of the world to update.
+        world (World): The updated world data.
+
+    Returns:
+        dict or None: The updated world data as a dictionary if successful, else None.
+
+    Raises:
+        NotFound: If the world does not exist.
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
     """
-    # First, verify the world exists and belongs to the user
-    existing_world = get_world(user_id, world_id)
-    if not existing_world:
-        return None  # World not found or does not belong to the user
+    try:
+        world_ref = firebase_db.collection(COLLECTION_NAME).document(world_id)
+        world_data = world.model_dump(exclude={"id"})
+        world_ref.update(world_data)
+        updated_doc = world_ref.get()
+        if updated_doc.exists:
+            return updated_doc.to_dict()
+        else:
+            return None
+    except NotFound as not_found_error:
+        raise NotFound(f"World not found: {not_found_error}")
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while updating world: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while updating world: {general_error}")
 
-    # Convert Pydantic model to dictionary, excluding unset fields
-    update_dict = update_data.model_dump(exclude_unset=True)
 
-    if not update_dict:
-        # No fields to update, return the existing world
-        return existing_world
-
-    update_document(COLLECTION_NAME, world_id, update_dict)
-
-    # Fetch and return the updated world object
-    return get_world(user_id, world_id)
-
-
-def delete_world(user_id: str, world_id: str) -> bool:
+def delete_world(world_id: str) -> bool:
     """
-    Deletes a world, ensuring it belongs to the user.
-    Returns True if deleted, False otherwise.
-    """
-    # First, verify the world exists and belongs to the user
-    existing_world = get_world(user_id, world_id)
-    if not existing_world:
-        return False  # World not found or does not belong to the user
+    Delete a world by its ID.
 
-    delete_document(COLLECTION_NAME, world_id)
-    return True
+    Args:
+        world_id (str): The ID of the world to delete.
+
+    Returns:
+        bool: True if deletion was successful.
+
+    Raises:
+        NotFound: If the world does not exist.
+        GoogleCloudError: If there is a database error.
+        Exception: If there is a general error.
+    """
+    try:
+        world_ref = firebase_db.collection(COLLECTION_NAME).document(world_id)
+        world_ref.delete()
+        return True
+    except NotFound as not_found_error:
+        raise NotFound(f"World not found: {not_found_error}")
+    except GoogleCloudError as db_error:
+        raise GoogleCloudError(
+            f"Database error while deleting world: {db_error}")
+    except Exception as general_error:
+        raise Exception(
+            f"Unexpected error while deleting world: {general_error}")

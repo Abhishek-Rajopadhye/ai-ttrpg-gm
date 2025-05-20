@@ -1,82 +1,157 @@
-# routes/worlds.py
-from fastapi import APIRouter, Depends, HTTPException, status
+# routes/world.py
+from fastapi import APIRouter, HTTPException
 from typing import List
-from app.db.world import World, WorldCreate, WorldUpdate
-from app.services import world_service, auth_service  # Assuming services directory is accessible
-
-# Assuming you have a dependency to get the current user ID from Firebase Auth
-# from dependencies import get_current_user_id
+from app.db.world import World, WorldCreate
+from app.services.world_service import (
+    get_world,
+    get_all_worlds_of_user,
+    create_world,
+    update_world,
+    delete_world,
+)
+from app.services.item_service import get_item
 
 router = APIRouter()
 
-# Placeholder dependency for getting current user ID
-# Replace with your actual Firebase Auth integration
-
-# Import or define firebase_auth here
-
-
-@router.post("/", response_model=World, status_code=status.HTTP_201_CREATED)
-def create_world_route(
-    world_data: WorldCreate,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
-    """
-    Creates a new world for the authenticated user.
-    """
-    return world_service.create_world(user_id, world_data)
-
-
-@router.get("/", response_model=List[World])
-def get_all_worlds_route(
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
-    """
-    Retrieves all worlds owned by the authenticated user.
-    """
-    return world_service.get_all_worlds(user_id)
-
 
 @router.get("/{world_id}", response_model=World)
-def get_world_route(
-    world_id: str,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
+def read_world(world_id: str):
     """
-    Retrieves a specific world by its ID, ensuring it belongs to the user.
+    Retrieve a world by its ID.
+
+    Args:
+        world_id (str): The ID of the world.
+
+    Returns:
+        World: The world object.
+
+    Raises:
+        HTTPException: 
+            404: If not found
+            500: For other errors.
     """
-    world = world_service.get_world(user_id, world_id)
-    if world is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="World not found or you do not have access")
-    return world
+    try:
+        world = get_world(world_id)
+        if world is None:
+            raise HTTPException(status_code=404, detail="World not found")
+        return world
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving world: {e}")
+
+
+@router.get("/user/{user_id}", response_model=List[World])
+def read_worlds_by_user(user_id: str):
+    """
+    Retrieve all worlds for a specific user.
+
+    Args:
+        user_id (str): The user's ID.
+
+    Returns:
+        List[World]: List of world objects.
+
+    Raises:
+        HTTPException:
+            500: For errors.
+    """
+    try:
+        worlds = get_all_worlds_of_user(user_id)
+        return worlds
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving worlds for user: {e}")
+
+
+@router.post("/", response_model=str)
+def create_world_route(world: WorldCreate):
+    """
+    Create a new world.
+
+    Args:
+        world (WorldCreate): The world data.
+
+    Returns:
+        str: The ID of the newly created world.
+
+    Raises:
+        HTTPException:
+            500: For errors.
+    """
+    try:
+        world_id = create_world(world)
+        return world_id
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error creating world: {e}")
 
 
 @router.put("/{world_id}", response_model=World)
-def update_world_route(
-    world_id: str,
-    update_data: WorldUpdate,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
+def update_world_route(world_id: str, world: World):
     """
-    Updates an existing world, ensuring it belongs to the user.
+    Update an existing world.
+
+    Args:
+        world_id (str): The ID of the world to update.
+        world (World): The updated world data.
+
+    Returns:
+        World: The updated world object.
+
+    Raises:
+        HTTPException: 
+            404: If not found
+            500: For other errors.
     """
-    updated_world = world_service.update_world(user_id, world_id, update_data)
-    if updated_world is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="World not found or you do not have access")
-    return updated_world
+    try:
+        updated_world = update_world(world_id, world)
+        if updated_world is None:
+            raise HTTPException(status_code=404, detail="World not found")
+        return updated_world
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating world: {e}")
 
 
-@router.delete("/{world_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_world_route(
-    world_id: str,
-    user_id: str = Depends(auth_service.get_current_user_id)
-):
+@router.put("/worlds/{world_id}/items/{item_id}")
+def add_item_to_world(world_id: str, item_id: str):
+    world = get_world(world_id)
+    if world is None:
+        raise HTTPException(status_code=404, detail="World not found")
+    item = get_item(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    world["item_ids"] = world.get("item_ids", []) + [item_id]
+    update_world(world_id, World(**world))
+    return {"message": "Item added to world"}
+
+@router.delete("/{world_id}")
+def delete_world_route(world_id: str):
     """
-    Deletes a world, ensuring it belongs to the user.
+    Delete a world by its ID.
+
+    Args:
+        world_id (str): The ID of the world to delete.
+
+    Returns:
+        dict: Message indicating deletion status.
+
+    Raises:
+        HTTPException: 
+            404: If not found
+            500: For other errors.
     """
-    success = world_service.delete_world(user_id, world_id)
-    if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="World not found or you do not have access")
-    return {"detail": "World deleted successfully"}
+    try:
+        deleted = delete_world(world_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="World not found")
+        return {"message": "World deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting world: {e}")
