@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App className="bg-gray-100 min-h-screen flex flex-col md:flex-row items-center justify-center" />
+  <StrictMode className="bg-gray-100 dark:bg-gray-600 text-black dark:text-white min-h-screen flex flex-col md:flex-row items-center justify-center" >
+    <App />
   </StrictMode>,
 )

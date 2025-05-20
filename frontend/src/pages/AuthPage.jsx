@@ -93,6 +93,7 @@ export default function AuthPage() {
 
 			const data = await response.json();
 			console.log("Backend token verification successful:", data);
+			window.location.href = "/home"
 			// Backend has now verified the user. You can proceed with your app logic.
 		} catch (error) {
 			console.error("Error sending token to backend:", error);

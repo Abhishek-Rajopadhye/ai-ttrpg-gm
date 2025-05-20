@@ -20,16 +20,16 @@ function RowSection({ title, items, onAdd, loading, emptyLabel }) {
                         <Spinner size="lg" />
                     </div>
                 ) : items.length === 0 ? (
-                    <div className="text-gray-500 italic px-2 py-6">{emptyLabel}</div>
+                    <div className="text-gray-100 italic px-2 py-6">{emptyLabel}</div>
                 ) : (
                     <div className="flex gap-4">
                         {items.map((item) => (
                             <Card
                                 key={item.id}
-                                className="min-w-[220px] max-w-xs flex-shrink-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                                className="min-w-[220px] max-w-xs flex-shrink-0"
                             >
                                 <h3 className="font-semibold text-lg">{item.name}</h3>
-                                <p className="text-gray-600 dark:text-gray-300 text-sm">{item.description}</p>
+                                <p className="text-sm">{item.description}</p>
                             </Card>
                         ))}
                     </div>
@@ -124,7 +124,7 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div className="max-w-6xl mx-auto p-6 dark:text-white">
+        <div className="max-w-6xl mx-auto p-6 bg-gray-100 dark:bg-gray-600 text-black dark:text-white">
             <RowSection
                 title="Campaigns"
                 items={campaigns}

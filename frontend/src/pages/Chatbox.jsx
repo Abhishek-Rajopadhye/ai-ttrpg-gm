@@ -45,17 +45,7 @@ export default function Chatbox() {
 
 	return (
 		<div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-			<header className="p-4 bg-blue-700 dark:bg-blue-800 text-white flex justify-between items-center shadow">
-				<h1 className="text-2xl font-bold tracking-wide">AI TTRPG Session</h1>
-				<Button
-					color="light"
-					onClick={logout}
-					className="!bg-white dark:!bg-blue-900 !text-blue-700 dark:!text-white px-4 py-2 font-semibold shadow hover:!bg-blue-100 dark:hover:!bg-gray-700 transition"
-				>
-					Sign Out
-				</Button>
-			</header>
-			<main className="flex-1 overflow-y-auto p-6 space-y-4">
+			<main className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
 				{messages.map((msg, index) => (
 					<Card
 						key={index}
@@ -122,22 +112,22 @@ export default function Chatbox() {
 					</Card>
 				)}
 				<div ref={chatEndRef} />
+				<div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex gap-2 shadow">
+					<TextInput
+						type="text"
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+						onKeyDown={(e) => e.key === "Enter" && handleSend()}
+						placeholder="Type your message..."
+						className="flex-1"
+						color="gray"
+						autoFocus
+					/>
+					<Button color="blue" onClick={handleSend} disabled={loading} className="px-6 py-2 font-semibold">
+						Send
+					</Button>
+				</div>
 			</main>
-			<footer className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex gap-2 shadow">
-				<TextInput
-					type="text"
-					value={input}
-					onChange={(e) => setInput(e.target.value)}
-					onKeyDown={(e) => e.key === "Enter" && handleSend()}
-					placeholder="Type your message..."
-					className="flex-1"
-					color="gray"
-					autoFocus
-				/>
-				<Button color="blue" onClick={handleSend} disabled={loading} className="px-6 py-2 font-semibold">
-					Send
-				</Button>
-			</footer>
 		</div>
 	);
 }
