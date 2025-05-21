@@ -1,35 +1,50 @@
 # db/character.py
 from pydantic import BaseModel
 from typing import Optional, List
+from enum import Enum
+from app.db.attribute import Attribute
+from app.db.skill import Skill
+from app.db.spell import Spell
+from app.db.equipment import Equipment
+from app.db.item import InventoryItem
 
+class StatusCondition(str, Enum):
+    stunned = "stunned"
+    poisoned = "poisoned"
+    # Add more status conditions as needed
+
+class Race(str, Enum):
+    human = "human"
+    elf = "elf"
+    # Add more races as needed
+
+class PersonalityTrait(str, Enum):
+    brave = "brave"
+    optimistic = "optimistic"
+    # Add more personality traits as needed
 
 class CharacterBase(BaseModel):
     name: str
-    type: str  # "PC" or "NPC"
-    description: str
-    backstory: Optional[str]
-    race: str
-    class_: str
+    class_id: str
+    specialization_id: Optional[str]
     level: int
-    xp: int
-    alignment: str
-    stats: dict
-    skills: dict
-    saving_throws: dict
-    inventory: List[dict]
-    equipment_slots: dict
-    abilities: List[dict]
-    spells: List[dict]
-    status_effects: List[str]
-    current_location_id: Optional[str]
-    map_position: Optional[dict]
-    ai_data: Optional[dict]
-    campaign_id: Optional[str]
-
+    experience: int
+    experience_for_next_level: int
+    attributes: List[Attribute]
+    skills: List[Skill]
+    spells: List[Spell]
+    equipment: List[Equipment]
+    inventory: List[InventoryItem]
+    status_conditions: List[StatusCondition]
+    race: Race
+    personality_traits: List[PersonalityTrait]
+    background_story: str
+    feats: List[str]
+    titles: List[str]
+    image: Optional[str]
 
 class CharacterCreate(CharacterBase):
     pass
-
 
 class Character(CharacterBase):
     id: str

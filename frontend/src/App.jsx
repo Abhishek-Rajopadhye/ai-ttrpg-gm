@@ -17,7 +17,7 @@ import {
 	DarkThemeToggle,
 	Button,
 } from "flowbite-react";
-import { useContext } from "react";
+import { useContext, Fragment } from "react";
 import { HiMenu } from "react-icons/hi";
 
 function AppContent() {
@@ -39,53 +39,56 @@ function AppContent() {
 	const onMenuClick = () => {}; // Placeholder, implement sidebar toggle if needed
 
 	return (
-		<>
-			{path !== "/auth" && (
-				<Navbar fluid className="bg-blue-700 dark:bg-gray-900 shadow">
-					<div className="flex items-center gap-3">
-						{showMenuButton && (
-							<Button
-								className="md:hidden bg-blue-700 dark:bg-gray-900 text-white p-2 shadow"
-								onClick={onMenuClick}
-								aria-label="Open sidebar"
-								style={{ zIndex: 60 }}
+		<Fragment>
+			<div className="h-screen flex flex-col">
+				{path !== "/auth" && (
+					<Navbar fluid className="bg-blue-700 dark:bg-gray-900 shadow fixed z-10 h-17 w-screen">
+						<div className="flex items-center gap-3">
+							{showMenuButton && (
+								<Button
+									className="md:hidden bg-blue-700 dark:bg-gray-900 text-white p-2 shadow"
+									onClick={onMenuClick}
+									aria-label="Open sidebar"
+									style={{ zIndex: 60 }}
+								>
+									<HiMenu size={24} />
+								</Button>
+							)}
+							<NavbarBrand href="/home">
+								<span className="self-center whitespace-nowrap text-2xl font-bold text-white dark:text-white">
+									{title || "AI TTRPG"}
+								</span>
+							</NavbarBrand>
+						</div>
+						<div className="flex items-center gap-4">
+							<Dropdown
+								arrowIcon={false}
+								inline
+								label={<Avatar alt="User settings" img={user?.photoURL || undefined} rounded />}
 							>
-								<HiMenu size={24} />
-							</Button>
-						)}
-						<NavbarBrand href="/home">
-							<span className="self-center whitespace-nowrap text-2xl font-bold text-white dark:text-white">
-								{title || "AI TTRPG"}
-							</span>
-						</NavbarBrand>
-					</div>
-					<div className="flex items-center gap-4">
-						<DarkThemeToggle />
-						<Dropdown
-							arrowIcon={false}
-							inline
-							label={<Avatar alt="User settings" img={user?.photoURL || undefined} rounded />}
-						>
-							<DropdownHeader>
-								<span className="block text-sm">{user?.displayName || "User"}</span>
-								<span className="block truncate text-sm font-medium">{user?.email}</span>
-							</DropdownHeader>
-							<DropdownItem href="/chat">Chat</DropdownItem>
-							<DropdownItem href="/worlds">Worlds</DropdownItem>
-							<DropdownDivider />
-							<DropdownItem onClick={logout}>Sign out</DropdownItem>
-						</Dropdown>
-					</div>
-				</Navbar>
-			)}
-			<Routes>
-				<Route path="/auth" element={<AuthPage />} />
-				<Route path="/chat" element={<Chatbox />} />
-				<Route path="/home" element={<HomePage />} />
-				<Route path="/worlds" element={<WorldsPage />} />
-				<Route path="/*" element={<Navigate to="/auth" />} />
-			</Routes>
-		</>
+								<DropdownHeader>
+									<span className="block text-sm">{user?.displayName || "User"}</span>
+									<span className="block truncate text-sm font-medium">{user?.email}</span>
+								</DropdownHeader>
+								<DropdownItem href="/chat">Chat</DropdownItem>
+								<DropdownItem href="/worlds">Worlds</DropdownItem>
+								<DropdownDivider />
+								<DropdownItem onClick={logout}>Sign out</DropdownItem>
+							</Dropdown>
+						</div>
+					</Navbar>
+				)}
+				<div className="relative mt-17 flex-2 items-center gap-3">
+					<Routes>
+						<Route path="/auth" element={<AuthPage />} />
+						<Route path="/chat" element={<Chatbox />} />
+						<Route path="/home" element={<HomePage />} />
+						<Route path="/worlds" element={<WorldsPage />} />
+						<Route path="/*" element={<Navigate to={user ? "/auth" : "/home"} />} />
+					</Routes>
+				</div>
+			</div>
+		</Fragment>
 	);
 }
 

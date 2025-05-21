@@ -1,46 +1,37 @@
 # db/campaign.py
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
+from app.db.world import World
+from app.db.character import Character
 
+class CampaignEvent(BaseModel):
+    timestamp: datetime
+    event_type: str  # e.g. "player_action", "npc_interaction", "quest_completion"
+    description: str
+    character_id: Optional[str]  # ID of the character involved in the event
+    world_id: Optional[str]  # ID of the world where the event occurred
 
 class CampaignBase(BaseModel):
     name: str
-    description: str
-    created_by_user_id: Optional[str]
-    ruleset: str
-    game_state: dict
+    worlds: List[World]
+    characters: List[Character]
+    created_at: datetime
+    updated_at: datetime
+    history: List[CampaignEvent]
+    by_user: str
 
 
 class CampaignCreate(CampaignBase):
     pass
 
+class CampaignUpdate(BaseModel):
+    name: Optional[str]
+    worlds: Optional[List[World]]
+    characters: Optional[List[Character]]
+    updated_at: Optional[datetime] = datetime.now(timezone.utc)
+    history: Optional[List[CampaignEvent]]
 
 class Campaign(CampaignBase):
     id: str
-    created_at: datetime
-    last_played_at: datetime
-    player_character_ids: List[str]
-    active_npc_character_ids: List[str]
-    world_definition_id: Optional[str]
-
-    class Config:
-        from_attributes = True
-
-
-class GameState(BaseModel):
-    current_location_id: str
-    current_scene_description: str
-    time_of_day: str
-    weather: str
-    party_location_notes: str
-    campaign_variables: dict
-    in_combat: bool
-    combat_state: Optional[dict]
-
-
-class CombatState(BaseModel):
-    turn_order: List[str]
-    current_turn_index: int
-    round_number: int
-    active_effects: List[dict]
+    pass

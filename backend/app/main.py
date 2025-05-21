@@ -7,7 +7,6 @@ from app.api.world import router as world_router
 from app.api.item import router as item_router
 from app.api.character import router as char_router
 from app.api.campaign import router as campgain_router
-from app.api.location import router as location_router
 
 app = FastAPI()
 
@@ -28,4 +27,3 @@ app.include_router(world_router, prefix="/api/world", tags=["World"])
 app.include_router(item_router, prefix="/api/item", tags=["Item"])
 app.include_router(char_router, prefix="/api/character", tags=["Character"])
 app.include_router(campgain_router, prefix="/api/campaign", tags=["Campaign"])
-app.include_router(location_router, prefix="/api/location", tags=["Location"])

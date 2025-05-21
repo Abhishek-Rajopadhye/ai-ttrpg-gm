@@ -124,7 +124,7 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div className="max-w-6xl mx-auto p-6 bg-gray-100 dark:bg-gray-600 text-black dark:text-white">
+        <div className="max-w-screen mx-auto p-6 bg-gray-100 dark:bg-gray-600 text-black dark:text-white">
             <RowSection
                 title="Campaigns"
                 items={campaigns}

@@ -44,8 +44,8 @@ export default function Chatbox() {
 	}, [messages, loading]);
 
 	return (
-		<div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-			<main className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
+		<div className="overflow-y-clip relative h-160 bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+			<main className="relative h-140 overflow-y-auto p-6 space-y-4">
 				{messages.map((msg, index) => (
 					<Card
 						key={index}
@@ -112,22 +112,22 @@ export default function Chatbox() {
 					</Card>
 				)}
 				<div ref={chatEndRef} />
-				<div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex gap-2 shadow">
-					<TextInput
-						type="text"
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						onKeyDown={(e) => e.key === "Enter" && handleSend()}
-						placeholder="Type your message..."
-						className="flex-1"
-						color="gray"
-						autoFocus
-					/>
-					<Button color="blue" onClick={handleSend} disabled={loading} className="px-6 py-2 font-semibold">
-						Send
-					</Button>
-				</div>
 			</main>
+			<footer className="relative w-screen p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex gap-2 shadow">
+				<TextInput
+					type="text"
+					value={input}
+					onChange={(e) => setInput(e.target.value)}
+					onKeyDown={(e) => e.key === "Enter" && handleSend()}
+					placeholder="Type your message..."
+					className="flex-1"
+					color="gray"
+					autoFocus
+				/>
+				<Button color="blue" onClick={handleSend} disabled={loading} className="px-6 py-2 font-semibold">
+					Send
+				</Button>
+			</footer>{" "}
 		</div>
 	);
 }

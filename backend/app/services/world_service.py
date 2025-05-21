@@ -1,12 +1,16 @@
-# services/world_service.py
-from typing import Optional
-from app.db.world import WorldCreate, World
+from typing import Optional, List
+from app.db.world import WorldCreate, World, WorldUpdate, Area, POI
 from app.core.firebase import firebase_db
 from datetime import datetime, timezone
 from google.cloud.exceptions import NotFound, GoogleCloudError
 
 COLLECTION_NAME = "worlds"
 
+import base64
+
+def save_image_from_base64(base64_str, filename):
+    with open(filename, "wb") as f:
+        f.write(base64.b64decode(base64_str))
 
 def get_world(world_id: str) -> Optional[dict]:
     """
@@ -36,8 +40,7 @@ def get_world(world_id: str) -> Optional[dict]:
         raise Exception(
             f"Unexpected error while fetching world: {general_error}")
 
-
-def get_all_worlds_of_user(user_id: str) -> list:
+def get_all_worlds_of_user(user_id: str) -> List[dict]:
     """
     Fetch all worlds owned by a specific user.
 
@@ -45,7 +48,7 @@ def get_all_worlds_of_user(user_id: str) -> list:
         user_id (str): The user's ID.
 
     Returns:
-        list: List of world data as dictionaries.
+        List[dict]: List of world data as dictionaries.
 
     Raises:
         GoogleCloudError: If there is a database error.
@@ -53,7 +56,7 @@ def get_all_worlds_of_user(user_id: str) -> list:
     """
     try:
         docs = firebase_db.collection(COLLECTION_NAME).where(
-            "user_id", "==", user_id).get()
+            "by_user", "==", user_id).get()
         worlds = [doc.to_dict() for doc in docs]
         return worlds
     except GoogleCloudError as db_error:
@@ -63,7 +66,6 @@ def get_all_worlds_of_user(user_id: str) -> list:
         raise Exception(
             f"Unexpected error while fetching worlds for user: {general_error}"
         )
-
 
 def create_world(world: WorldCreate) -> str:
     """
@@ -80,8 +82,11 @@ def create_world(world: WorldCreate) -> str:
         Exception: If there is a general error.
     """
     try:
-        world_data = world.dict()
+        world_data = world.model_dump()
         world_data["created_at"] = datetime.now(timezone.utc)
+        # Ensure nested models are dicts
+        world_data["areas"] = [area.model_dump() for area in world.areas] if world.areas else []
+        world_data["pois"] = [poi.model_dump() for poi in world.pois] if world.pois else []
         world_ref = firebase_db.collection(COLLECTION_NAME).document()
         world_ref.set(world_data)
         return world_ref.id
@@ -92,14 +97,13 @@ def create_world(world: WorldCreate) -> str:
         raise Exception(
             f"Unexpected error while creating world: {general_error}")
 
-
-def update_world(world_id: str, world: World) -> Optional[dict]:
+def update_world(world_id: str, world_update: WorldUpdate) -> Optional[dict]:
     """
     Update an existing world.
 
     Args:
         world_id (str): The ID of the world to update.
-        world (World): The updated world data.
+        world_update (WorldUpdate): The updated world data.
 
     Returns:
         dict or None: The updated world data as a dictionary if successful, else None.
@@ -111,8 +115,13 @@ def update_world(world_id: str, world: World) -> Optional[dict]:
     """
     try:
         world_ref = firebase_db.collection(COLLECTION_NAME).document(world_id)
-        world_data = world.model_dump(exclude={"id"})
-        world_ref.update(world_data)
+        update_data = world_update.dict(exclude_unset=True)
+        # Convert nested models to dicts if present
+        if "areas" in update_data and update_data["areas"] is not None:
+            update_data["areas"] = [area.dict() for area in update_data["areas"]]
+        if "pois" in update_data and update_data["pois"] is not None:
+            update_data["pois"] = [poi.dict() for poi in update_data["pois"]]
+        world_ref.update(update_data)
         updated_doc = world_ref.get()
         if updated_doc.exists:
             return updated_doc.to_dict()
@@ -126,7 +135,6 @@ def update_world(world_id: str, world: World) -> Optional[dict]:
     except Exception as general_error:
         raise Exception(
             f"Unexpected error while updating world: {general_error}")
-
 
 def delete_world(world_id: str) -> bool:
     """

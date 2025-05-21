@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Card, Label, TextInput, Alert, Spinner } from "flowbite-react";
+import { Button, Card, Label, TextInput, Alert, Spinner, HRText } from "flowbite-react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
@@ -212,9 +212,7 @@ export default function AuthPage() {
 					</Button>
 				</form>
 				<div className="my-4 flex items-center">
-					<div className="flex-1 border-t border-neutral-300" />
-					<span className="mx-4 text-neutral-600 dark:text-neutral-300 font-semibold">OR</span>
-					<div className="flex-1 border-t border-neutral-300" />
+					<HRText text="OR" />
 				</div>
 				<div className="flex flex-col gap-2">
 					<Button color="light" onClick={handleGoogleLogin} className="w-full flex items-center justify-center gap-2">
