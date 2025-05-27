@@ -14,11 +14,13 @@ import {
 	DropdownItem,
 	Avatar,
 	ThemeProvider,
-	DarkThemeToggle,
 	Button,
 } from "flowbite-react";
 import { useContext, Fragment } from "react";
 import { HiMenu } from "react-icons/hi";
+
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 
 function AppContent() {
 	const { user, logout } = useContext(AuthContext);
@@ -78,7 +80,7 @@ function AppContent() {
 						</div>
 					</Navbar>
 				)}
-				<div className="relative mt-17 flex-2 items-center gap-3">
+				<div className={`relative items-center gap-3 ${path !== "/auth" ? "mt-18" : ""}`}>
 					<Routes>
 						<Route path="/auth" element={<AuthPage />} />
 						<Route path="/chat" element={<Chatbox />} />

@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Button, Card, Label, TextInput, Alert, Spinner, HRText } from "flowbite-react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth } from "../config/firebaseConfig";
 import axios from "axios";
 import { BACKEND_URL } from "../config/const";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AuthPage() {
+	const {setUser} = useContext(AuthContext);
 	const [isRegister, setIsRegister] = useState(false);
 	const [email, setEmail] = useState("");
 	const [name, setName] = useState("");
@@ -26,7 +28,7 @@ export default function AuthPage() {
 			const result = await signInWithPopup(auth, provider);
 			// The user object is in result.user
 			const user = result.user;
-
+			setUser(result.user);
 			console.log("Google login successful:", user);
 
 			// Get the Firebase ID token
@@ -53,6 +55,7 @@ export default function AuthPage() {
 			const result = await signInWithPopup(auth, provider);
 			// The user object is in result.user
 			const user = result.user;
+			setUser(result.user);
 
 			console.log("GitHub login successful:", user);
 

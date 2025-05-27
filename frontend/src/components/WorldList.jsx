@@ -3,20 +3,21 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { BACKEND_URL } from "../config/const";
-import EditWorldModal from "./EditWorld";
+import WorldEditor from "./WorldEditor";
 
 export default function WorldList({ worlds, setWorlds, onWorldUpdated, onWorldDeleted }) {
+    const user_id = localStorage.getItem("user_id");
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
-	const [showEdit, setShowEdit] = useState(false);
 	const [selectedWorld, setSelectedWorld] = useState(null);
+	const [showWorldEditor, setShowWorldEditor] = useState(false);
 
 	const fetchWorlds = async () => {
 		setLoading(true);
 		setError("");
 		try {
 			const token = localStorage.getItem("access_token");
-			const res = await axios.get(`${BACKEND_URL}/api/world/`, {
+			const res = await axios.get(`${BACKEND_URL}/api/world/user/${user_id}`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -51,7 +52,18 @@ export default function WorldList({ worlds, setWorlds, onWorldUpdated, onWorldDe
 
 	const handleEdit = (world) => {
 		setSelectedWorld(world);
-		setShowEdit(true);
+		setShowWorldEditor(true);
+	};
+
+	const handleWorldEditorClose = () => {
+		setShowWorldEditor(false);
+		setSelectedWorld(null);
+	};
+
+	const handleWorldEditorUpdated = (updatedWorld) => {
+		onWorldUpdated && onWorldUpdated(updatedWorld);
+		setShowWorldEditor(false);
+		setSelectedWorld(null);
 	};
 
 	return (
@@ -70,9 +82,9 @@ export default function WorldList({ worlds, setWorlds, onWorldUpdated, onWorldDe
 							className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between shadow-sm hover:shadow transition"
 						>
 							<div>
-								<div className="text-lg font-semibold">{world.name}</div>
-								{world.description && <div className="text-gray-600">{world.description}</div>}
-								{world.lore && <div className="text-gray-500 text-sm mt-1">{world.lore}</div>}
+								<div className="text-lg text-black dark:text-white font-semibold">{world.name}</div>
+								{world.description && <div className="text-gray-600 dark:text-gray-300">{world.description}</div>}
+								{world.lore && <div className="text-gray-500 dark:text-gray-200 text-sm mt-1">{world.lore}</div>}
 							</div>
 							<div className="flex gap-2 mt-3 md:mt-0">
 								<button
@@ -92,12 +104,15 @@ export default function WorldList({ worlds, setWorlds, onWorldUpdated, onWorldDe
 					))}
 				</ul>
 			)}
-			<EditWorldModal
-				isOpen={showEdit}
-				onClose={() => setShowEdit(false)}
-				world={selectedWorld}
-				onWorldUpdated={onWorldUpdated}
-			/>
+			{/* WorldEditor modal */}
+			{showWorldEditor && selectedWorld && (
+				<WorldEditor
+					worldId={selectedWorld.id}
+					initialWorld={selectedWorld}
+					onClose={handleWorldEditorClose}
+					onWorldUpdated={handleWorldEditorUpdated}
+				/>
+			)}
 		</>
 	);
 }

@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
 	const logout = () => {
 		setUser(null);
 		localStorage.removeItem("user");
+		localStorage.removeItem("user_id");
 		localStorage.removeItem("access_token");
 		localStorage.removeItem("refresh_token");
 		// Optionally, redirect to login page
