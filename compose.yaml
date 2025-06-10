@@ -1,4 +1,4 @@
-services:
+ervices:
   backend:
     build:
       context: ./backend
@@ -8,13 +8,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    working_dir: /app
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "5173:5173"
     restart: unless-stopped
-
-# Add volumes or networks if needed
+    working_dir: /app
