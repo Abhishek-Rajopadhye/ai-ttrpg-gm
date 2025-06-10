@@ -20,4 +20,4 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 
 # Start the backend (replace main.py with your entrypoint if different)
-CMD ["python", "main.py"]
+CMD ["fastapi", "--app", "run", "app"]
